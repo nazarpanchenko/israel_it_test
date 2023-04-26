@@ -1,50 +1,61 @@
-import { Model, Schema, model } from 'mongoose';
+import { Model, Schema, model, Types } from 'mongoose';
 import {
   EventData,
   EventsList,
   ModifiedEventData,
-  IgnoredEventsCount,
-  ReportedEventsCount,
-} from '../shared/types';
-import { EVENT_SEVERITY, EVENT_STATE } from '../consts';
+  EventsCount,
+  EventState,
+} from '../shared';
+
+import { EVENT_STATE, EVENT_SEVERITY } from '../consts';
 import { logger } from '../utils';
 
 interface IEventModel extends Model<EventData> {
-  getEvents(): Promise<EventsList>;
+  getEventsList(): Promise<EventsList>;
+  getEventsCount(state: EventState): Promise<number>;
   createEvent(event: EventData): Promise<void>;
-  ignoreEvent(id: string): Promise<IgnoredEventsCount>;
-  reportEvent(id: string): Promise<ReportedEventsCount>;
+  setEventStatus(id: Types.ObjectId, state: EventState): Promise<EventsCount>;
 }
 
-const schema = new Schema<EventData, IEventModel>({
-  name: {
-    type: String,
-    required: true,
+const schema = new Schema<EventData, IEventModel>(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    severity: {
+      type: String,
+      enum: Object.values(EVENT_SEVERITY),
+      default: EVENT_SEVERITY.MEDIUM,
+    },
+    state: {
+      type: String,
+      enum: Object.values(EVENT_STATE),
+      default: EVENT_STATE.CREATED,
+    },
   },
-  timestamp: {
-    type: Number,
-    required: true,
-    minlength: 1,
-    maxlength: 2,
-  },
-  severity: {
-    type: String,
-    enum: Object.values(EVENT_SEVERITY),
-    default: EVENT_SEVERITY[2],
-  },
-  state: {
-    type: String,
-    enum: Object.values(EVENT_STATE),
-    default: EVENT_STATE.CREATED,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
-schema.statics.getEvents = async function (): Promise<EventsList> {
-  const [data, totalCount]: [EventData[], number] = await Promise.all([
-    EventModel.find(),
+schema.statics.getEventsList = async function (): Promise<EventsList> {
+  const [rows, totalCount]: [EventData[], number] = await Promise.all([
+    EventModel.find().lean(),
     EventModel.count(),
   ]);
-  return { data, totalCount };
+  const _rows = rows.map((el: EventData) => ({
+    ...el,
+    timestamp: new Date(el.createdAt).getSeconds(),
+  }));
+
+  return { rows: _rows, totalCount };
+};
+
+schema.statics.getEventsCount = async function (state: EventState): Promise<number> {
+  const count = await EventModel.count({ state });
+  return count;
 };
 
 schema.statics.createEvent = async function (_event: EventData): Promise<void> {
@@ -52,29 +63,22 @@ schema.statics.createEvent = async function (_event: EventData): Promise<void> {
   await event.save();
 };
 
-schema.statics.ignoreEvent = async function (_id: string): Promise<IgnoredEventsCount> {
+schema.statics.setEventStatus = async function (
+  _id: Types.ObjectId,
+  state: EventState
+): Promise<EventsCount> {
   const updatedEvent: ModifiedEventData | null = await EventModel.findByIdAndUpdate(
     _id,
     {
-      state: EVENT_STATE.IGNORED,
+      state,
     },
     { new: true }
   );
-  return {
-    updatedEvent,
-    ignoredCount: await EventModel.count({ state: EVENT_STATE.IGNORED }),
-  };
-};
 
-schema.statics.reportEvent = async function (_id: string): Promise<ReportedEventsCount> {
-  const updatedEvent: ModifiedEventData | null = await EventModel.findByIdAndUpdate(
-    _id,
-    { state: EVENT_STATE.REPORTED },
-    { new: true }
-  );
   return {
     updatedEvent,
-    reportedCount: await EventModel.count({ state: EVENT_STATE.REPORTED }),
+    ignoredCount: await EventModel.getEventsCount(EVENT_STATE.IGNORED),
+    reportedCount: await EventModel.getEventsCount(EVENT_STATE.REPORTED),
   };
 };
 

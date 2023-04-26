@@ -4,7 +4,9 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "start:local": "cross-env NODE_ENV=local nodemon --watch 'src/**/*.*' --exec ts-node -r dotenv/config src/index.ts dotenv_config_path=.env.local"
+    "cross-env": "cross-env NODE_ENV=local",
+    "start:local": "npm run cross-env && nodemon --watch 'src/**/*.*' --exec ts-node -r dotenv/config src/index.ts dotenv_config_path=.env.local",
+    "seed": "npm run cross-env && ts-node -r dotenv/config src/db/seeds/events.seed.ts dotenv_config_path=.env.local"
   },
   "author": "Nazar Panchenko",
   "license": "ISC",
@@ -13,6 +15,7 @@
     "@types/express": "^4.17.17",
     "@types/morgan": "^1.9.4",
     "@types/node": "^18.16.0",
+    "@types/ws": "^8.5.4",
     "eslint": "^8.39.0",
     "eslint-config-prettier": "^8.8.0",
     "prettier": "^2.8.8",
@@ -29,6 +32,7 @@
     "morgan": "^1.10.0",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.1",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "ws": "^8.13.0"
   }
 }

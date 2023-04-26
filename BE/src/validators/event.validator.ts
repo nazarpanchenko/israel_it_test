@@ -1,16 +1,18 @@
-import { param, body } from 'express-validator';
-import { EVENT_SEVERITY } from '../consts';
+import { query, body } from 'express-validator';
+import { EVENT_SEVERITY, EVENT_STATE } from '../consts';
 
 const eventValidator = {
+  list: [query('action').isIn(Object.values(EVENT_STATE)).optional()],
+
   create: [
     body('name').isString(),
-    body('timestamp').isInt().isLength({ min: 1, max: 2 }),
     body('severity').isIn(Object.values(EVENT_SEVERITY)).optional(),
   ],
 
-  ignore: [body('id').isMongoId()],
-
-  report: [body('id').isMongoId()],
+  update: [
+    body('id').isMongoId(),
+    body('action').isIn(Object.values(EVENT_STATE)),
+  ],
 };
 
 export default eventValidator;

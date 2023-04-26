@@ -1,14 +1,11 @@
+import { Types } from 'mongoose';
 import { EventModel } from '../db';
-import {
-  EventData,
-  EventsList,
-  IgnoredEventsCount,
-  ReportedEventsCount,
-} from '../shared/types';
+import { EventData, EventsList, EventsCount, EventState } from '../shared';
+import { EVENT_STATE } from '../consts';
 
 class EventProvider {
   async list(): Promise<EventsList> {
-    const list: EventsList = await EventModel.getEvents();
+    const list: EventsList = await EventModel.getEventsList();
     return list;
   }
 
@@ -16,13 +13,11 @@ class EventProvider {
     await EventModel.createEvent(event);
   }
 
-  async ignoreEvent(id: string): Promise<IgnoredEventsCount> {
-    const eventsCount: IgnoredEventsCount = await EventModel.ignoreEvent(id);
-    return eventsCount;
-  }
-
-  async reportEvent(id: string): Promise<ReportedEventsCount> {
-    const eventsCount: ReportedEventsCount = await EventModel.reportEvent(id);
+  async setEventStatus(
+    id: Types.ObjectId,
+    state: EventState = EVENT_STATE.CREATED
+  ): Promise<EventsCount> {
+    const eventsCount: EventsCount = await EventModel.setEventStatus(id, state);
     return eventsCount;
   }
 }

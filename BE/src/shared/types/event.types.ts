@@ -1,43 +1,70 @@
-type EventSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
+import { Types } from 'mongoose';
 
 type EventState = 'created' | 'ignored' | 'reported';
 
+type EventSeverity = 'low' | 'medium' | 'high';
+
 type ModifiedEventData = {
-  _id: object;
+  _id: Types.ObjectId;
   name: string;
-  timestamp: number;
-  severity: string;
-  state: string;
+  severity: EventSeverity;
+  state: EventState;
+  createdAt: Date;
+  updatedAt: Date;
   __v: number;
 } | null;
 
 type EventData = {
-  id: string;
+  _id: Types.ObjectId;
   name: string;
+  severity?: EventSeverity;
+  state?: EventState;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type EventWithTimestamp = {
+  _id: Types.ObjectId;
+  name: string;
+  severity?: EventSeverity;
+  state?: EventState;
+  createdAt: Date;
+  updatedAt: Date;
   timestamp: number;
-  severity: EventSeverity;
-  state: EventState;
+};
+
+type MockEventData = {
+  _id?: Types.ObjectId;
+  name: string;
+  severity?: EventSeverity;
+  state?: EventState;
+  timestamp: number;
 };
 
 type EventsList = {
-  data: EventData[];
+  rows: EventData[];
   totalCount: number;
 };
 
-type IgnoredEventsCount = {
+type EventsCount = {
   updatedEvent: ModifiedEventData;
   ignoredCount: number;
-};
-
-type ReportedEventsCount = {
-  updatedEvent: ModifiedEventData;
   reportedCount: number;
 };
 
+type WebSocketMessage = {
+  sender: Types.ObjectId;
+  body: EventState;
+};
+
 export {
+  EventState,
+  EventSeverity,
   EventData,
+  EventWithTimestamp,
+  MockEventData,
   EventsList,
   ModifiedEventData,
-  IgnoredEventsCount,
-  ReportedEventsCount,
+  EventsCount,
+  WebSocketMessage,
 };

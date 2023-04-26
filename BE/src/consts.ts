@@ -1,9 +1,9 @@
 export const API_PREFIX = '/api/v1';
 
 export const EVENT_SEVERITY = Object.freeze({
-  1: 'LOW',
-  2: 'MEDIUM',
-  3: 'HIGH',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
 });
 
 export const EVENT_STATE = Object.freeze({
