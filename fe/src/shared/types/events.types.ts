@@ -1,24 +1,12 @@
-type EventState = 'created' | 'ignored' | 'reported';
+export type EventSeverity = "low" | "medium" | "high";
 
-type EventSeverity = 'low' | 'medium' | 'high';
-
-export type ModifiedEventData = {
-  _id: string;
-  name: string;
-  severity: EventSeverity;
-  state: EventState;
-  createdAt: Date;
-  updatedAt: Date;
-  __v: number;
-} | null;
+export type EventState = "created" | "ignored" | "reported";
 
 export type FetchedEventData = {
   _id: string;
   name: string;
   severity: EventSeverity;
   state?: EventState;
-  createdAt?: Date;
-  updatedAt?: Date;
   timestamp: number;
 };
 
@@ -26,17 +14,26 @@ export type TableCellData = {
   _id: string;
   name: string;
   severity?: EventSeverity;
-  state?: EventState;
   timestamp: number;
 };
+
+export type MuiTableCellData = {
+  _id: string | number;
+  name: string | number;
+  severity: string | number;
+  timestamp: string | number;
+  action: string | number;
+}[];
 
 export type EventsList = {
   rows: FetchedEventData[];
   totalCount: number;
 };
 
-export type EventsCount = {
-  updatedEvent: ModifiedEventData;
-  ignoredCount: number;
-  reportedCount: number;
+export type IgnoredEventsCount = {
+  ignoredCount: FetchedEventData[];
+};
+
+export type ReportedEventsCount = {
+  reportedCount: FetchedEventData[];
 };

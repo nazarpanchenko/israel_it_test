@@ -4,23 +4,12 @@ type EventState = 'created' | 'ignored' | 'reported';
 
 type EventSeverity = 'low' | 'medium' | 'high';
 
-type ModifiedEventData = {
-  _id: Types.ObjectId;
-  name: string;
-  severity: EventSeverity;
-  state: EventState;
-  createdAt: Date;
-  updatedAt: Date;
-  __v: number;
-} | null;
-
 type EventData = {
   _id: Types.ObjectId;
   name: string;
   severity?: EventSeverity;
   state?: EventState;
-  createdAt: Date;
-  updatedAt: Date;
+  timestamp: number;
 };
 
 type EventWithTimestamp = {
@@ -28,8 +17,6 @@ type EventWithTimestamp = {
   name: string;
   severity?: EventSeverity;
   state?: EventState;
-  createdAt: Date;
-  updatedAt: Date;
   timestamp: number;
 };
 
@@ -46,15 +33,12 @@ type EventsList = {
   totalCount: number;
 };
 
-type EventsCount = {
-  updatedEvent: ModifiedEventData;
-  ignoredCount: number;
-  reportedCount: number;
+type IgnoredEventsCount = {
+  ignoredCount: EventWithTimestamp[];
 };
 
-type WebSocketMessage = {
-  sender: Types.ObjectId;
-  body: EventState;
+type ReportedEventsCount = {
+  reportedCount: EventWithTimestamp[];
 };
 
 export {
@@ -64,7 +48,6 @@ export {
   EventWithTimestamp,
   MockEventData,
   EventsList,
-  ModifiedEventData,
-  EventsCount,
-  WebSocketMessage,
+  IgnoredEventsCount,
+  ReportedEventsCount,
 };

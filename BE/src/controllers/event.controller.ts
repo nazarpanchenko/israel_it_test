@@ -13,19 +13,19 @@ const eventController = {
     }
   },
 
-  create: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  ignore: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await eventProvider.createEvent(req.body);
-      res.status(StatusCodes.CREATED).send({ message: 'Event stored' });
+      await eventProvider.ignoreEvent(req.body.id);
+      res.status(StatusCodes.OK).send({ status: 'Event set ignored' });
     } catch (err: any) {
       next(err);
     }
   },
 
-  update: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  report: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const eventsCount = await eventProvider.setEventStatus(req.body.id, req.body?.action);
-      res.status(StatusCodes.OK).send({ eventsCount });
+      await eventProvider.reportEvent(req.body.id);
+      res.status(StatusCodes.OK).send({ status: 'Event set reported' });
     } catch (err: any) {
       next(err);
     }

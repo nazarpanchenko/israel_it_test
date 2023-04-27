@@ -8,8 +8,8 @@ const eventRouter = express.Router();
 
 eventRouter.get('/', validateRoute(), eventController.list);
 
-eventRouter.post('/', eventValidator.create, validateRoute(), eventController.create);
+eventRouter.post('/ignore', eventValidator.ignore, validateRoute(), eventController.ignore);
 
-eventRouter.put('/', eventValidator.update, validateRoute(), eventController.update);
+eventRouter.post('/report', eventValidator.report, validateRoute(), eventController.report);
 
 export default eventRouter;

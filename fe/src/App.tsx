@@ -1,12 +1,16 @@
 import React from "react";
-import { Table } from "./components";
+import { TableContainer } from "./containers";
+import Grid from "@mui/material/Grid";
+
 import "./App.css";
 
 function App() {
   return (
-    <div className="App">
-      <Table />
-    </div>
+    <Grid container justifyContent="center" spacing={2} p={5}>
+      <Grid item xs={10}>
+        <TableContainer />
+      </Grid>
+    </Grid>
   );
 }
 

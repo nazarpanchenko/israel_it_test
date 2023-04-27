@@ -1,16 +1,17 @@
 import express from 'express';
-import http from 'http';
 import { WebSocketServer } from 'ws';
+import { Socket } from 'dgram';
+import http from 'http';
 import cors from 'cors';
 import morgan from 'morgan';
 
 import { handleErrors } from './middlewares';
 import * as routers from './routes';
 import initDB from './db/conf';
-import { eventProvider } from './services';
 import { logger } from './utils';
 import { API_PREFIX, EVENT_STATE } from './consts';
-import { EventsCount, WebSocketMessage } from './shared';
+import { eventProvider } from './services';
+import { IgnoredEventsCount, ReportedEventsCount } from './shared';
 
 const app = express();
 
@@ -34,37 +35,36 @@ process.on('unhandledRejection', err => {
 });
 
 const startServer = (): void => {
-  const PORT = process.env.PORT || 9000;
   const WS_PORT = process.env.WS_PORT || 8000;
+  const PORT = process.env.PORT || 9000;
 
   try {
     const server = http.createServer();
-    const wss = new WebSocketServer({ server });
-
-    server.listen(WS_PORT, () => {
+    server.listen(WS_PORT, async (): Promise<void> => {
       logger.info(`WebSocket server is running on port ${WS_PORT}`);
     });
 
-    wss.on('connection', ws => {
-      logger.info('Web socket connected to client');
+    const wss = new WebSocketServer({ server });
+
+    wss.on('connection', (ws: Socket) => {
+      logger.info('Web socket connection opened');
 
       ws.on('message', async (message: string) => {
         logger.info(`Client message received. Message: ${message}`);
 
-        const _message: WebSocketMessage = JSON.parse(message);
-        const stateFieldName = EVENT_STATE.IGNORED as string;
-        const eventState = _message.body[stateFieldName as keyof typeof _message.body]
+        const _message = JSON.parse(message);
+        const action = _message.body === EVENT_STATE.IGNORED
           ? EVENT_STATE.IGNORED
           : EVENT_STATE.REPORTED;
 
-        const eventsCount: EventsCount = await eventProvider.setEventStatus(
-          _message.sender,
-          eventState
-        );
+        const eventsCount: IgnoredEventsCount | ReportedEventsCount =
+          await eventProvider.countEvents(action);
         ws.send(JSON.stringify(eventsCount));
       });
 
-      ws.on('close', () => logger.info('Web socket disconnected from client'));
+      ws.on('close', () => {
+        logger.info('Web socket server closed');
+      });
     });
 
     app.listen(PORT, async (): Promise<void> => {

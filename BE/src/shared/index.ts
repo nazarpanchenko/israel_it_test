@@ -5,9 +5,8 @@ import {
   EventWithTimestamp,
   MockEventData,
   EventsList,
-  ModifiedEventData,
-  EventsCount,
-  WebSocketMessage,
+  IgnoredEventsCount,
+  ReportedEventsCount,
 } from './types/event.types';
 
 export {
@@ -17,7 +16,6 @@ export {
   EventWithTimestamp,
   MockEventData,
   EventsList,
-  ModifiedEventData,
-  EventsCount,
-  WebSocketMessage,
+  IgnoredEventsCount,
+  ReportedEventsCount,
 };

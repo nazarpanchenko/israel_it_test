@@ -1,7 +1,11 @@
 import { Types } from 'mongoose';
+import {
+  EventState,
+  EventsList,
+  IgnoredEventsCount,
+  ReportedEventsCount,
+} from '../shared';
 import { EventModel } from '../db';
-import { EventData, EventsList, EventsCount, EventState } from '../shared';
-import { EVENT_STATE } from '../consts';
 
 class EventProvider {
   async list(): Promise<EventsList> {
@@ -9,15 +13,18 @@ class EventProvider {
     return list;
   }
 
-  async createEvent(event: EventData): Promise<void> {
-    await EventModel.createEvent(event);
+  async ignoreEvent(id: Types.ObjectId): Promise<void> {
+    await EventModel.ignoreEvent(id);
   }
 
-  async setEventStatus(
-    id: Types.ObjectId,
-    state: EventState = EVENT_STATE.CREATED
-  ): Promise<EventsCount> {
-    const eventsCount: EventsCount = await EventModel.setEventStatus(id, state);
+  async reportEvent(id: Types.ObjectId): Promise<void> {
+    await EventModel.reportEvent(id);
+  }
+
+  async countEvents(
+    state: EventState
+  ): Promise<IgnoredEventsCount | ReportedEventsCount> {
+    const eventsCount: any = await EventModel.countEvents(state);
     return eventsCount;
   }
 }
