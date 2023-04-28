@@ -1,3 +1,5 @@
+export type FetchLimit = 10 | 25 | 50;
+
 export type EventSeverity = "low" | "medium" | "high";
 
 export type EventState = "created" | "ignored" | "reported";
@@ -17,7 +19,7 @@ export type TableCellData = {
   timestamp: number;
 };
 
-export type MuiTableCellData = {
+export type EnhancedTableCellData = {
   _id: string | number;
   name: string | number;
   severity: string | number;
@@ -31,9 +33,11 @@ export type EventsList = {
 };
 
 export type IgnoredEventsCount = {
-  ignoredCount: FetchedEventData[];
+  filteredEvents: FetchedEventData[];
+  ignoredCount: number;
 };
 
 export type ReportedEventsCount = {
-  reportedCount: FetchedEventData[];
+  filteredEvents: FetchedEventData[];
+  reportedCount: number;
 };

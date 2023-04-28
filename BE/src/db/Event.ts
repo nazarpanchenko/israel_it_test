@@ -1,5 +1,6 @@
 import { Model, Schema, model, Types } from 'mongoose';
 import {
+  FetchLimit,
   EventData,
   EventState,
   EventsList,
@@ -11,7 +12,7 @@ import { EVENT_STATE, EVENT_SEVERITY } from '../consts';
 import { logger } from '../utils';
 
 interface IEventModel extends Model<EventData> {
-  getEventsList(): Promise<EventsList>;
+  getEventsList(limit: FetchLimit): Promise<EventsList>;
   ignoreEvent(id: Types.ObjectId): Promise<void>;
   reportEvent(id: Types.ObjectId): Promise<void>;
   countEvents(state: EventState): Promise<IgnoredEventsCount | ReportedEventsCount>;
@@ -39,47 +40,42 @@ const schema = new Schema<EventData, IEventModel>({
   },
 });
 
-schema.statics.getEventsList = async function (): Promise<EventsList> {
+schema.statics.getEventsList = async function (limit: FetchLimit): Promise<EventsList> {
   const [rows, totalCount]: [EventData[], number] = await Promise.all([
-    EventModel.find().lean(),
-    EventModel.count(),
+    EventModel.find({ state: EVENT_STATE.CREATED }).limit(limit).lean(),
+    EventModel.count({ state: EVENT_STATE.CREATED }),
   ]);
 
   return { rows, totalCount };
 };
 
-schema.statics.ignoreEvent = async function (_id: Types.ObjectId): Promise<void> {
-  await EventModel.findByIdAndUpdate(
-    _id,
-    {
-      state: EVENT_STATE.IGNORED,
-    },
-    { new: true }
-  );
+schema.statics.ignoreEvent = async function (id: Types.ObjectId): Promise<void> {
+  await EventModel.findByIdAndUpdate(id, {
+    state: EVENT_STATE.IGNORED,
+  });
 };
 
-schema.statics.reportEvent = async function (_id: Types.ObjectId): Promise<void> {
-  await EventModel.findByIdAndUpdate(
-    _id,
-    {
-      state: EVENT_STATE.REPORTED,
-    },
-    { new: true }
-  );
+schema.statics.reportEvent = async function (id: Types.ObjectId): Promise<void> {
+  await EventModel.findByIdAndUpdate(id, {
+    state: EVENT_STATE.REPORTED,
+  });
 };
 
 schema.statics.countEvents = async function (
   state: EventState
 ): Promise<IgnoredEventsCount | ReportedEventsCount> {
+  const filteredEvents = await EventModel.find({ state: EVENT_STATE.CREATED });
+  const eventsCount: unknown = { filteredEvents };
+
   if (state === EVENT_STATE.IGNORED) {
-    return {
-      ignoredCount: await EventModel.find({ state }),
-    };
-  } else {
-    return {
-      reportedCount: await EventModel.find({ state }),
-    };
+    (eventsCount as IgnoredEventsCount).ignoredCount = await EventModel.count({ state });
+  } else if (state === EVENT_STATE.REPORTED) {
+    (eventsCount as ReportedEventsCount).reportedCount = await EventModel.count({
+      state,
+    });
   }
+
+  return eventsCount as IgnoredEventsCount | ReportedEventsCount;
 };
 
 const EventModel = model<EventData, IEventModel>('Event', schema);

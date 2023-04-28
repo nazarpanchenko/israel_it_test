@@ -29,8 +29,9 @@ import { visuallyHidden } from "@mui/utils";
 
 import {
   TableCellData,
-  MuiTableCellData,
+  EnhancedTableCellData,
   EventSeverity,
+  EventState,
 } from "../../shared/types/events.types";
 import { EVENT_STATE, TABLE_PAGINATION_LIMIT } from "../../consts";
 
@@ -208,7 +209,7 @@ function EnhancedTableToolbar() {
 
 interface IEnhancedTableProps {
   rows: TableCellData[];
-  handleEventStatusChange: Function;
+  handleEventStatusChange(eventId: string, state: EventState): Promise<void>;
 }
 
 const EnhancedTable: FC<IEnhancedTableProps> = (props: IEnhancedTableProps) => {
@@ -220,7 +221,7 @@ const EnhancedTable: FC<IEnhancedTableProps> = (props: IEnhancedTableProps) => {
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState<number>(
-    TABLE_PAGINATION_LIMIT.MIN
+    TABLE_PAGINATION_LIMIT.AVERAGE
   );
 
   const handleRequestSort = (
@@ -259,9 +260,7 @@ const EnhancedTable: FC<IEnhancedTableProps> = (props: IEnhancedTableProps) => {
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setRowsPerPage(
-      parseInt(event.target.value, TABLE_PAGINATION_LIMIT.AVERAGE)
-    );
+    setRowsPerPage(Number(event.target.value));
     setPage(0);
   };
 
@@ -275,10 +274,10 @@ const EnhancedTable: FC<IEnhancedTableProps> = (props: IEnhancedTableProps) => {
 
   const visibleRows = useMemo(
     () =>
-      stableSort(rows as MuiTableCellData, getComparator(order, orderBy)).slice(
-        page * rowsPerPage,
-        page * rowsPerPage + rowsPerPage
-      ),
+      stableSort(
+        rows as EnhancedTableCellData,
+        getComparator(order, orderBy)
+      ).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [rows, order, orderBy, page, rowsPerPage]
   );
 
@@ -335,8 +334,8 @@ const EnhancedTable: FC<IEnhancedTableProps> = (props: IEnhancedTableProps) => {
                             useFlexGap
                             flexWrap="wrap"
                           >
-                            <ReportIcon color="error" />
-                            <Box color="info">Ignore</Box>
+                            <DoNotDisturbIcon color="info" />
+                            <Box>Ignore</Box>
                           </Stack>
                         </Button>
                         <Button
@@ -354,8 +353,8 @@ const EnhancedTable: FC<IEnhancedTableProps> = (props: IEnhancedTableProps) => {
                             useFlexGap
                             flexWrap="wrap"
                           >
-                            <DoNotDisturbIcon color="info" />
-                            <Box color="error">Report</Box>
+                            <ReportIcon color="error" />
+                            <Box>Report</Box>
                           </Stack>
                         </Button>
                       </Stack>

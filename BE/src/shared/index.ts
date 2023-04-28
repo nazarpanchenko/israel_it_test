@@ -1,4 +1,5 @@
 import {
+  FetchLimit,
   EventState,
   EventSeverity,
   EventData,
@@ -10,6 +11,7 @@ import {
 } from './types/event.types';
 
 export {
+  FetchLimit,
   EventState,
   EventSeverity,
   EventData,

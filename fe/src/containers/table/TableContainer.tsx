@@ -1,36 +1,49 @@
-import { FC, useState, useEffect, useRef } from "react";
-import { Grid, Box } from "@mui/material";
-import Typography from "@mui/material/Typography";
-
-import { EVENT_STATE, EVENT_SEVERITY } from "../../consts";
+import { FC, MutableRefObject, useState, useEffect, useRef } from "react";
 import {
+  Grid,
+  Stack,
+  Box,
+  Typography,
+  InputLabel,
+  MenuItem,
+  FormControl,
+  Select,
+  IconButton,
+} from "@mui/material";
+
+import { SelectChangeEvent } from "@mui/material/Select";
+import CachedIcon from "@mui/icons-material/Cached";
+
+import {
+  FetchLimit,
   EventState,
   EventsList,
   FetchedEventData,
+  IgnoredEventsCount,
+  ReportedEventsCount,
 } from "../../shared/types/events.types";
-import {
-  getEvents,
-  ignoreEvent,
-  reportEvent,
-} from "../../services/events.provider";
+import { getEvents, ignoreEvent, reportEvent } from "../../services";
+
+import { FETCH_LIMIT, EVENT_STATE, EVENT_SEVERITY } from "../../consts";
 
 import { EnhancedTable } from "../../components";
 
 const TableContainer: FC = () => {
-  const ws: React.MutableRefObject<WebSocket | null> = useRef(null);
+  const ws: MutableRefObject<WebSocket | null> = useRef(null);
 
   const [tableData, setTableData] = useState<EventsList>({
     rows: [],
     totalCount: 0,
   });
-  const [ignoredCount, setIgnoredCount] = useState<number>(0);
-  const [reportedCount, setReportedCount] = useState<number>(0);
+  const [rowsLimit, setRowsLimit] = useState<FetchLimit>(
+    FETCH_LIMIT.AVERAGE as FetchLimit
+  );
 
   const fetchEvents = async (): Promise<void> => {
-    const res: EventsList | void = await getEvents();
+    const events: EventsList | void = await getEvents(rowsLimit);
 
-    if (res) {
-      const rows: FetchedEventData[] = res.rows.map(
+    if (events) {
+      const rows: FetchedEventData[] = events.rows.map(
         (el) =>
           ({
             _id: el._id.toString(),
@@ -43,92 +56,122 @@ const TableContainer: FC = () => {
 
       setTableData({
         rows,
-        totalCount: res.totalCount,
+        totalCount: events.totalCount,
       });
     }
   };
 
-  const handleWsOpen = (): void => {
-    ws.current = new WebSocket(`${process.env.REACT_APP_WS_URI}`);
-    ws.current.onopen = () => {
-      console.log("Socket connection opened");
-    };
+  const handleRowsLimitChange = (e: SelectChangeEvent): void => {
+    setRowsLimit(e.target.value as unknown as FetchLimit);
   };
 
-  const handleWsClose = (): void => {
-    if (ws.current) {
-      ws.current.close();
-      console.log("Socket connection closed");
-    }
+  const handleTableRefresh = async () => {
+    fetchEvents();
   };
 
   const handleEventStatusChange = async (
     eventId: string,
     state: EventState
-  ) => {
-    handleWsOpen();
-
+  ): Promise<void> => {
     if (state === EVENT_STATE.IGNORED) {
       await ignoreEvent(eventId);
-    } else {
+    } else if (state === EVENT_STATE.REPORTED) {
       await reportEvent(eventId);
     }
 
-    if (ws.current) {
-      ws.current.send(
+    ws.current = new WebSocket(`${process.env.REACT_APP_WS_URI}`);
+
+    ws.current.onopen = () => {
+      console.log("Socket connection opened");
+
+      (ws as unknown as MutableRefObject<WebSocket>).current.send(
         JSON.stringify({
           sender: eventId,
           body: state,
         })
       );
 
-      ws.current.onmessage = async (e) => {
-        const data = JSON.parse(e.data);
-        const filteredRows = tableData.rows.filter(
-          (el: FetchedEventData) => el?.state === EVENT_STATE.CREATED
+      (ws as unknown as MutableRefObject<WebSocket>).current.onmessage = async (
+        e
+      ) => {
+        const wsRes: IgnoredEventsCount | ReportedEventsCount = JSON.parse(
+          e.data
         );
+        const { filteredEvents } = wsRes;
+
+        (ws as unknown as MutableRefObject<WebSocket>).current.close();
+        console.log("Socket connection closed");
+
+        if (state === EVENT_STATE.IGNORED) {
+          localStorage.setItem(
+            "ignoredEventsCount",
+            String((wsRes as unknown as IgnoredEventsCount).ignoredCount)
+          );
+        } else if (state === EVENT_STATE.REPORTED) {
+          localStorage.setItem(
+            "reportedEventsCount",
+            String((wsRes as unknown as ReportedEventsCount).reportedCount)
+          );
+        }
 
         setTableData((prev) => ({
           ...prev,
-          rows: [...filteredRows],
+          rows: [...filteredEvents],
+          totalCount: filteredEvents.length,
         }));
-
-        if (state === EVENT_STATE.IGNORED) {
-          setIgnoredCount(data.ignoredCount.length);
-        } else {
-          setReportedCount(data.reportedCount.length);
-        }
       };
-    }
+    };
   };
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    handleWsClose();
-  }, []);
-
   return (
     <Grid container justifyContent="center">
-      <Grid item xs={6} mb={6}>
-        <Typography align="center" variant="h1" fontSize="2rem" gutterBottom>
+      <Grid item xs={12} mb={5}>
+        <Typography align="center" variant="h1" fontSize="2.5rem" gutterBottom>
           Event Management
         </Typography>
       </Grid>
+      <Grid item sm={12} md={3} mr={{ xs: 1, sm: 3 }} mb={{ sm: 5 }}>
+        <Box color="blue" fontWeight={900}>
+          Ignored Count: {localStorage.getItem("ignoredEventsCount") || "0"}
+        </Box>
+      </Grid>
+      <Grid item md={3} sm={12} mb={{ xs: 1, sm: 5 }}>
+        <Box color="red" fontWeight={900}>
+          Reported Count: {localStorage.getItem("reportedEventsCount") || "0"}
+        </Box>
+      </Grid>
 
-      <Grid container justifyContent="center" mb={4}>
-        <Grid item sm={12} md={3} mr={{ xs: 1, sm: 3 }} mb={{ sm: 4 }}>
-          <Box color="blue" fontWeight={900}>
-            Ignored Count: {ignoredCount}
-          </Box>
-        </Grid>
-        <Grid item md={3} sm={12} mb={{ sm: 1 }}>
-          <Box color="red" fontWeight={900}>
-            Reported Count: {reportedCount}
-          </Box>
-        </Grid>
+      <Grid item xs={12}>
+        <Box maxWidth={180} mb={5}>
+          <Stack direction="row" justifyContent="space-between" spacing={3}>
+            <FormControl fullWidth>
+              <InputLabel id="rows-limit-label">Rows Limit</InputLabel>
+              <Select
+                labelId="rows-limit-label"
+                id="rows-limit"
+                value={rowsLimit as unknown as string | undefined}
+                defaultValue={
+                  FETCH_LIMIT.AVERAGE as unknown as string | undefined
+                }
+                label="Rows limit"
+                onChange={handleRowsLimitChange}
+              >
+                <MenuItem value={FETCH_LIMIT.MIN}>{FETCH_LIMIT.MIN}</MenuItem>
+                <MenuItem value={FETCH_LIMIT.AVERAGE}>
+                  {FETCH_LIMIT.AVERAGE}
+                </MenuItem>
+                <MenuItem value={FETCH_LIMIT.MAX}>{FETCH_LIMIT.MAX}</MenuItem>
+              </Select>
+            </FormControl>
+            <IconButton onClick={handleTableRefresh}>
+              <CachedIcon fontSize="large" />
+            </IconButton>
+          </Stack>
+        </Box>
       </Grid>
 
       <EnhancedTable

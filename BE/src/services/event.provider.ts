@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import {
+  FetchLimit,
   EventState,
   EventsList,
   IgnoredEventsCount,
@@ -8,8 +9,8 @@ import {
 import { EventModel } from '../db';
 
 class EventProvider {
-  async list(): Promise<EventsList> {
-    const list: EventsList = await EventModel.getEventsList();
+  async list(limit: FetchLimit): Promise<EventsList> {
+    const list: EventsList = await EventModel.getEventsList(limit);
     return list;
   }
 

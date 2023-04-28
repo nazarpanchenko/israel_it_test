@@ -1,11 +1,13 @@
-import { AxiosResponse } from "axios";
 import { $axios } from "../utils";
-import { EventsList } from "../shared/types/events.types";
+import { FetchLimit, EventsList } from "../shared/types/events.types";
 
-export const getEvents = async (): Promise<EventsList | void> => {
+export const getEvents = async (
+  limit: FetchLimit
+): Promise<EventsList | void> => {
   try {
-    const res: AxiosResponse<any, any> = await $axios.get(`/events`);
-    const events: EventsList = res.data;
+    const events: EventsList = await $axios.get(`/events`, {
+      params: { limit },
+    });
     return events;
   } catch (err: any) {
     console.log(err.message);

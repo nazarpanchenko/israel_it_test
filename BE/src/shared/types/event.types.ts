@@ -1,5 +1,7 @@
 import { Types } from 'mongoose';
 
+type FetchLimit = 10 | 25 | 50;
+
 type EventState = 'created' | 'ignored' | 'reported';
 
 type EventSeverity = 'low' | 'medium' | 'high';
@@ -34,14 +36,17 @@ type EventsList = {
 };
 
 type IgnoredEventsCount = {
-  ignoredCount: EventWithTimestamp[];
+  filteredEvents: EventWithTimestamp[];
+  ignoredCount: number;
 };
 
 type ReportedEventsCount = {
-  reportedCount: EventWithTimestamp[];
+  filteredEvents: EventWithTimestamp[];
+  reportedCount: number;
 };
 
 export {
+  FetchLimit,
   EventState,
   EventSeverity,
   EventData,

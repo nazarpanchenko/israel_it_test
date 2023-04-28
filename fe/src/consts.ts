@@ -1,7 +1,13 @@
+export const FETCH_LIMIT = Object.freeze({
+  MIN: 10,
+  AVERAGE: 25,
+  MAX: 50,
+});
+
 export const TABLE_PAGINATION_LIMIT = Object.freeze({
-  MIN: 5,
-  AVERAGE: 10,
-  MAX: 15,
+  MIN: 10,
+  AVERAGE: 20,
+  MAX: 30,
 });
 
 export const EVENT_STATE = Object.freeze({

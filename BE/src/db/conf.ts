@@ -9,4 +9,8 @@ const initDB = async (): Promise<void> => {
   } as ConnectOptions);
 };
 
+export const closeDBConnection = async (): Promise<void> => {
+  await mongoose.connection.close();
+};
+
 export default initDB;
