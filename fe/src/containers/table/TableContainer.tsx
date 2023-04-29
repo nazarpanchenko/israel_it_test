@@ -1,4 +1,13 @@
-import { FC, MutableRefObject, useState, useEffect, useRef } from "react";
+import {
+  FC,
+  MutableRefObject,
+  useState,
+  useEffect,
+  useRef,
+  Dispatch,
+} from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import {
   Grid,
   Stack,
@@ -10,55 +19,40 @@ import {
   Select,
   IconButton,
 } from "@mui/material";
-
+import CircularProgress from "@mui/material/CircularProgress";
 import { SelectChangeEvent } from "@mui/material/Select";
 import CachedIcon from "@mui/icons-material/Cached";
 
 import {
   FetchLimit,
   EventState,
-  EventsList,
-  FetchedEventData,
   IgnoredEventsCount,
   ReportedEventsCount,
+  EventReduxState,
+  EventReduxSelector,
+  EventReduxAction,
 } from "../../shared/types/events.types";
-import { getEvents, ignoreEvent, reportEvent } from "../../services";
 
-import { FETCH_LIMIT, EVENT_STATE, EVENT_SEVERITY } from "../../consts";
+import { FETCH_LIMIT, EVENT_STATE } from "../../consts";
+import { ignoreEvent, reportEvent } from "../../services";
+import { getEventsAction, updateEventsCountAction } from "../../state/actions";
 
 import { EnhancedTable } from "../../components";
 
 const TableContainer: FC = () => {
+  const dispatch = useDispatch() as Dispatch<EventReduxAction>;
+  const eventsSelector = useSelector<EventReduxSelector>(
+    (state: EventReduxSelector) => state.eventsReducer.events
+  ) as EventReduxState;
+
   const ws: MutableRefObject<WebSocket | null> = useRef(null);
 
-  const [tableData, setTableData] = useState<EventsList>({
-    rows: [],
-    totalCount: 0,
-  });
   const [rowsLimit, setRowsLimit] = useState<FetchLimit>(
     FETCH_LIMIT.AVERAGE as FetchLimit
   );
 
   const fetchEvents = async (): Promise<void> => {
-    const events: EventsList | void = await getEvents(rowsLimit);
-
-    if (events) {
-      const rows: FetchedEventData[] = events.rows.map(
-        (el) =>
-          ({
-            _id: el._id.toString(),
-            name: el.name,
-            severity: el?.severity || EVENT_SEVERITY.MEDIUM,
-            state: el?.state || EVENT_STATE.CREATED,
-            timestamp: el.timestamp,
-          } as FetchedEventData)
-      );
-
-      setTableData({
-        rows,
-        totalCount: events.totalCount,
-      });
-    }
+    dispatch(getEventsAction(rowsLimit) as unknown as EventReduxAction);
   };
 
   const handleRowsLimitChange = (e: SelectChangeEvent): void => {
@@ -114,11 +108,9 @@ const TableContainer: FC = () => {
           );
         }
 
-        setTableData((prev) => ({
-          ...prev,
-          rows: [...filteredEvents],
-          totalCount: filteredEvents.length,
-        }));
+        dispatch(
+          updateEventsCountAction(filteredEvents, filteredEvents.length)
+        );
       };
     };
   };
@@ -174,10 +166,18 @@ const TableContainer: FC = () => {
         </Box>
       </Grid>
 
-      <EnhancedTable
-        rows={tableData.rows}
-        handleEventStatusChange={handleEventStatusChange}
-      />
+      <Grid item xs={12}>
+        {eventsSelector.loading ? (
+          <Stack direction="row" justifyContent="center" alignItems="center">
+            <CircularProgress size="20vw" />
+          </Stack>
+        ) : (
+          <EnhancedTable
+            rows={eventsSelector.rows}
+            handleEventStatusChange={handleEventStatusChange}
+          />
+        )}
+      </Grid>
     </Grid>
   );
 };

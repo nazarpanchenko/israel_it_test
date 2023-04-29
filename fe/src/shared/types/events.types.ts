@@ -41,3 +41,32 @@ export type ReportedEventsCount = {
   filteredEvents: FetchedEventData[];
   reportedCount: number;
 };
+
+export type EventReduxAction = {
+  type: string;
+  payload?: EventsList;
+};
+
+export type EventReduxState = {
+  loading: boolean;
+  rows: FetchedEventData[];
+  totalCount: number;
+};
+
+export type EventReduxReducer = {
+  events: {
+    loading: boolean;
+    rows: FetchedEventData[];
+    totalCount: number;
+  };
+};
+
+export type EventReduxSelector = {
+  eventsReducer: {
+    events: {
+      loading: boolean;
+      rows: FetchedEventData[];
+      totalCount: number;
+    };
+  };
+};
