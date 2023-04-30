@@ -9,9 +9,10 @@ import { handleErrors } from './middlewares';
 import * as routers from './routes';
 import initDB from './db/conf';
 import { logger } from './utils';
-import { API_PREFIX, EVENT_STATE } from './consts';
+import { API_PREFIX, EVENT_SEVERITY, EVENT_STATE } from './consts';
+import { MockEventData, IgnoredEventsCount, ReportedEventsCount } from './shared';
+import { EventModel } from './db';
 import { eventProvider } from './services';
-import { IgnoredEventsCount, ReportedEventsCount } from './shared';
 
 const app = express();
 
@@ -53,9 +54,10 @@ const startServer = (): void => {
         logger.info(`Client message received. Message: ${message}`);
 
         const _message = JSON.parse(message);
-        const action = _message.body === EVENT_STATE.IGNORED
-          ? EVENT_STATE.IGNORED
-          : EVENT_STATE.REPORTED;
+        const action =
+          _message.body === EVENT_STATE.IGNORED
+            ? EVENT_STATE.IGNORED
+            : EVENT_STATE.REPORTED;
 
         const eventsCount: IgnoredEventsCount | ReportedEventsCount =
           await eventProvider.countEvents(action);
@@ -69,7 +71,32 @@ const startServer = (): void => {
 
     app.listen(PORT, async (): Promise<void> => {
       logger.info(`Server is listening on port ${PORT}`);
+
       await initDB();
+
+      // Populate database with data for testing purpose
+      const eventsCount: number = await EventModel.count();
+      let mockData: MockEventData[] = [];
+
+      if (!eventsCount) {
+        for (let i = 1; i <= 100; i++) {
+          const severity =
+            i % 2 === 0
+              ? EVENT_SEVERITY.LOW
+              : i % 3
+              ? EVENT_SEVERITY.MEDIUM
+              : EVENT_SEVERITY.HIGH;
+
+          mockData.push({
+            name: `Event #${i}`,
+            severity,
+            timestamp: Math.round(new Date().getTime() / 1000),
+          });
+        }
+
+        await EventModel.insertMany(mockData);
+      }
+
       logger.info(`Database has been successfully initialized`);
     });
   } catch (err: any) {

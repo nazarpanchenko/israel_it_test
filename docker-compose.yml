@@ -1,0 +1,52 @@
+version: "3"
+services:
+  client:
+    build: ./app/fe
+    image: fe
+
+    # Keep client connection alive to assure correct container build
+    stdin_open: true
+
+    ports: 
+      - "3000:3000"
+    networks:
+      - mern-app
+    env_file:
+      - ./app/fe/.env.development
+  
+  db:
+    image: mongo:3.6.19-xenial
+    ports:
+      - "27017:27017"
+    networks:
+      - mern-app
+    volumes:
+      - mongo-data:/data/db
+  
+  server:
+    build: ./app/BE
+    image: be
+
+    # Use port 8000 for socket connection and port 9000 for express.js server
+    ports:
+      - "9000:9000"
+      - "8000:8000"
+
+    networks:
+      - mern-app
+    env_file:
+      - ./app/BE/.env.local
+
+    # Assure that express.js server is initialized correctly along with database
+    depends_on:
+      - db
+
+# Put containers into a private host network
+networks:
+  mern-app:
+    driver: bridge
+
+# Specify virtual mongoDB storage
+volumes:
+  mongo-data:
+    driver: local
