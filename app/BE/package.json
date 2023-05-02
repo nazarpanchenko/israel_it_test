@@ -6,6 +6,7 @@
   "scripts": {
     "cross-env": "cross-env NODE_ENV=local",
     "start:local": "npm run cross-env && nodemon --watch src/**/*.* --exec ts-node -r dotenv/config src/index.ts dotenv_config_path=.env.local",
+    "start:dev": "npm run cross-env && ts-node -r dotenv/config src/index.ts dotenv_config_path=.env.local",
     "lint": "eslint .",
     "lint:fix": "eslint --fix",
     "format": "prettier --write \"./**/*.{ts,tsx,md,json}\" --config .prettierrc"

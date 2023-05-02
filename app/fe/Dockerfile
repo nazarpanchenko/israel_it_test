@@ -1,6 +1,3 @@
-# FROM ubuntu:latest
-
-# RUN apt-get update && apt-get install -y nodejs npm
 FROM node:18-slim
 
 WORKDIR /usr/src/app

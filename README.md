@@ -5,7 +5,7 @@ Event management
 ### Dependencies
 
 * Docker desktop is required in order to run the following application using docker-compose up command
-* To run without docker, npm install command must be run from './app/BE' and './app/fe' folders respectively
+* To run without docker, npm install command must be run from './app/BE' and yarn install from './app/fe' folders respectively
 ```
 code blocks for commands
 ```
